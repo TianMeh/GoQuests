@@ -15,5 +15,9 @@ func New() http.Handler {
 	router.HandleFunc("/quest/{id}", UpdateQuest).Methods("PUT")
 	router.HandleFunc("/quest/{id}", DeleteQuest).Methods("DELETE")
 
+	// Auth
+	router.HandleFunc("/signup", Signup).Methods("POST")
+	router.HandleFunc("/signin", Signin).Methods("POST")
+
 	return router
 }
