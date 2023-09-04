@@ -13,8 +13,8 @@ The purpose of this API is learning the GO language.
 
 ## Endpoints
 
-/quests - GET
-/quest/{id} - GET
-/quest - POST
-/quest/{id} - PUT
-/quest/{id} - DELETE
+- /quests - GET
+- /quest/{id} - GET
+- /quest - POST
+- /quest/{id} - PUT
+- /quest/{id} - DELETE
