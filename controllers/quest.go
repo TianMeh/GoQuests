@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/TianMeh/go-guest/models"
 	"github.com/TianMeh/go-guest/utils"
@@ -47,7 +48,53 @@ type QuestInput struct {
 	Reward      int    `json:"reward" validate:"required"`
 }
 
+func CheckSession(r *http.Request) (bool, error) {
+
+	c, err := r.Cookie("session_token")
+
+	if err != nil {
+		if err == http.ErrNoCookie {
+			return false, nil
+		}
+		return false, err
+	}
+
+	sessionToken := c.Value
+	var session models.Session
+	result := models.DB.Where("token = ?", sessionToken).First(&session)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	userID := session.UserID
+	var user models.User
+	userResult := models.DB.First(&user, userID)
+
+	if userResult.Error != nil {
+		return false, userResult.Error
+	}
+
+	if session.Expires.Before(time.Now()) {
+		models.DB.Delete(session)
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func CreateQuest(w http.ResponseWriter, r *http.Request) {
+
+	userAuthenticated, err := CheckSession(r)
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	} else if !userAuthenticated {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Token invalid, missing or expired")
+		return
+	}
+
 	var input QuestInput
 
 	body, err := io.ReadAll(r.Body)
@@ -78,6 +125,16 @@ func CreateQuest(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateQuest(w http.ResponseWriter, r *http.Request) {
+
+	userAuthenticated, err := CheckSession(r)
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	} else if !userAuthenticated {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Token invalid, missing or expired")
+		return
+	}
 	setHeader(w)
 
 	id := mux.Vars(r)["id"]
@@ -120,6 +177,16 @@ func UpdateQuest(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteQuest(w http.ResponseWriter, r *http.Request) {
+
+	userAuthenticated, err := CheckSession(r)
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	} else if !userAuthenticated {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Token invalid, missing or expired")
+		return
+	}
 	setHeader(w)
 
 	id := mux.Vars(r)["id"]

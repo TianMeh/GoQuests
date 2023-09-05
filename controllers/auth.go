@@ -5,16 +5,19 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/TianMeh/go-guest/models"
 	"github.com/TianMeh/go-guest/utils"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Credentials struct {
 	Password string `json:"password" validate:"required"`
 	Username string `json:"username" validate:"required"`
+	ID       int64  `json:"user_id"`
 }
 
 func Signup(w http.ResponseWriter, r *http.Request) {
@@ -87,10 +90,26 @@ func Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessionToken := uuid.NewString()
+	expiresAt := time.Now().Add(120 * time.Second)
+
+	session := &models.Session{
+		UserID:  uint(storedCreds.ID),
+		Token:   sessionToken,
+		Expires: expiresAt,
+	}
+
+	models.DB.Create(session)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   session.Token,
+		Expires: session.Expires,
+	})
+
 	setHeader(w)
 	response := map[string]string{"username": storedCreds.Username}
 	json.NewEncoder(w).Encode(response)
 
 	return
-
 }

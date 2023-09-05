@@ -28,6 +28,7 @@ func ConnectDatabase() {
 
 	database.AutoMigrate(&Quest{})
 	database.AutoMigrate(&User{})
+	database.AutoMigrate(&Session{})
 
 	DB = database
 }
