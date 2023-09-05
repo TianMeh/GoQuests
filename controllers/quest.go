@@ -17,37 +17,6 @@ func setHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
-func GetAllQuests(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
-
-	var quests []models.Quest
-	models.DB.Find(&quests)
-
-	json.NewEncoder(w).Encode(quests)
-}
-
-func GetQuest(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
-
-	id := mux.Vars(r)["id"]
-	var quest models.Quest
-
-	if err := models.DB.Where("id = ?", id).First(&quest).Error; err != nil {
-		utils.RespondWithError(w, http.StatusNotFound, "Quest not found")
-		return
-	}
-
-	json.NewEncoder(w).Encode(quest)
-}
-
-var validate *validator.Validate
-
-type QuestInput struct {
-	Title       string `json:"title" validate:"required"`
-	Description string `json:"description" validate:"required"`
-	Reward      int    `json:"reward" validate:"required"`
-}
-
 func CheckSession(r *http.Request) (bool, error) {
 
 	c, err := r.Cookie("session_token")
@@ -81,6 +50,55 @@ func CheckSession(r *http.Request) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func GetAllQuests(w http.ResponseWriter, r *http.Request) {
+	userAuthenticated, err := CheckSession(r)
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	} else if !userAuthenticated {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Token invalid, missing or expired")
+		return
+	}
+	setHeader(w)
+
+	var quests []models.Quest
+	models.DB.Find(&quests)
+
+	json.NewEncoder(w).Encode(quests)
+}
+
+func GetQuest(w http.ResponseWriter, r *http.Request) {
+	userAuthenticated, err := CheckSession(r)
+
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	} else if !userAuthenticated {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Token invalid, missing or expired")
+		return
+	}
+	setHeader(w)
+
+	id := mux.Vars(r)["id"]
+	var quest models.Quest
+
+	if err := models.DB.Where("id = ?", id).First(&quest).Error; err != nil {
+		utils.RespondWithError(w, http.StatusNotFound, "Quest not found")
+		return
+	}
+
+	json.NewEncoder(w).Encode(quest)
+}
+
+var validate *validator.Validate
+
+type QuestInput struct {
+	Title       string `json:"title" validate:"required"`
+	Description string `json:"description" validate:"required"`
+	Reward      int    `json:"reward" validate:"required"`
 }
 
 func CreateQuest(w http.ResponseWriter, r *http.Request) {
