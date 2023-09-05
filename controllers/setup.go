@@ -18,6 +18,7 @@ func New() http.Handler {
 	// Auth
 	router.HandleFunc("/signup", Signup).Methods("POST")
 	router.HandleFunc("/signin", Signin).Methods("POST")
+	router.HandleFunc("/signout", Signout).Methods("POST")
 
 	return router
 }

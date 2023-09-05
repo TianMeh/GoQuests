@@ -113,3 +113,23 @@ func Signin(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
+
+func Signout(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	sessionToken := c.Value
+	var session models.Session
+	models.DB.Where("token = ?", sessionToken).First(&session)
+
+	models.DB.Delete(session)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   "",
+		Expires: time.Now(),
+	})
+}
