@@ -77,16 +77,16 @@ func Signin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	storedCreds := &Credentials{}
-	result := models.DB.Where("username = ?", creds.Username).First(&models.User{}).Scan(storedCreds)
+	models.DB.Where("username = ?", creds.Username).First(&models.User{}).Scan(storedCreds)
 
-	if result.RowsAffected == 0 {
+	if storedCreds.ID == 0 {
 		// User with the desired username already exists
 		utils.RespondWithError(w, http.StatusNotFound, "No matching user found")
 		return
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
-		utils.RespondWithError(w, http.StatusUnauthorized, "Wrong credentials")
+		utils.RespondWithError(w, http.StatusUnauthorized, "Wrong password")
 		return
 	}
 
@@ -110,8 +110,6 @@ func Signin(w http.ResponseWriter, r *http.Request) {
 	setHeader(w)
 	response := map[string]string{"username": storedCreds.Username}
 	json.NewEncoder(w).Encode(response)
-
-	return
 }
 
 func Signout(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +128,9 @@ func Signout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   "",
-		Expires: time.Now(),
+		Expires: time.Now().Add(-time.Hour),
 	})
+
+	response := map[string]string{"message": "success"}
+	json.NewEncoder(w).Encode(response)
 }
