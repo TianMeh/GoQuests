@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/TianMeh/go-guest/models"
@@ -49,11 +50,15 @@ type QuestInput struct {
 func CreateQuest(w http.ResponseWriter, r *http.Request) {
 	var input QuestInput
 
-	body, _ := io.ReadAll(r.Body)
-	_ = json.Unmarshal(body, &input)
+	body, err := io.ReadAll(r.Body)
+	err = json.Unmarshal(body, &input)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		log.Fatal("Error unmarshalling signup request data:", err.Error())
+	}
 
 	validate = validator.New()
-	err := validate.Struct(input)
+	err = validate.Struct(input)
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, string(err.Error()))
 		return
@@ -85,11 +90,21 @@ func UpdateQuest(w http.ResponseWriter, r *http.Request) {
 
 	var input QuestInput
 
-	body, _ := io.ReadAll(r.Body)
-	_ = json.Unmarshal(body, &input)
+	body, err := io.ReadAll(r.Body)
+	err = json.Unmarshal(body, &input)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err.Error())
+		log.Fatal("Error unmarshalling signup request data:", err.Error())
+		return
+	}
 
 	validate := validator.New()
-	err := validate.Struct(input)
+	err = validate.Struct(input)
+	if err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, string(err.Error()))
+		log.Fatal("Invalid data:", err.Error())
+		return
+	}
 
 	if err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, "Validation Error")
