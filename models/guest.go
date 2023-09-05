@@ -23,7 +23,3 @@ type Session struct {
 	Expires time.Time `json:"expires_at"`
 	Token   string    `json:"token"`
 }
-
-func (s *Session) isExpired() bool {
-	return s.Expires.Before(time.Now())
-}
