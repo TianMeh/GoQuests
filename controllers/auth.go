@@ -91,7 +91,7 @@ func Signin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(120 * time.Second)
+	expiresAt := time.Now().Add(1200 * time.Second)
 
 	session := &models.Session{
 		UserID:  uint(storedCreds.ID),
